@@ -4,4 +4,4 @@
 
 ## Todo
 
-https://youtu.be/_yx2fh8KEak?si=Ecc9pSHkfoxp5TB6
+https://youtu.be/_yx2fh8KEak?si=VIdIPL7k-tcfF1-r&t=1655
