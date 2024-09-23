@@ -1,4 +1,4 @@
-import { CapsuleCollider, euler, quat, RigidBody } from '@react-three/rapier';
+import { CapsuleCollider, euler, quat, RigidBody, vec3 } from '@react-three/rapier';
 import { Character } from './Character';
 import { useKeyboardControls } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
@@ -20,9 +20,24 @@ export const CharacterController = ({ player = false, controls, state, ...props 
 	const inTheAir = useRef(true);
 	const landed = useRef(false);
 
+	const cameraPosition = useRef();
+	const cameraLookAt = useRef();
+
 	useFrame(({ camera }) => {
 		if (stage === 'lobby') return;
 		if (stage !== 'game') return;
+
+		if (player) {
+			const rbPos = vec3(rb.current.translation());
+			if (!cameraLookAt.current) {
+				cameraLookAt.current = rbPos;
+			}
+			cameraLookAt.current.lerp(rbPos, 0.05);
+			camera.lookAt(cameraLookAt.current);
+			const worldPos = rbPos;
+			cameraPosition.current.getWorldPosition(worldPos);
+			camera.position.lerp(worldPos, 0.05);
+		}
 
 		if (!player) {
 			const pos = state.getState('pos');
@@ -102,6 +117,7 @@ export const CharacterController = ({ player = false, controls, state, ...props 
 			gravityScale={stage === 'game' ? 2.5 : 0}
 			name={player ? 'player' : 'other'}
 		>
+			<group ref={cameraPosition} position={[0, 8, -16]}></group>
 			<Character scale={0.42} color={state.state.profile.color} name={state.state.profile.name} position-y={0.2} />
 			<CapsuleCollider args={[0.1, 0.38]} position={[0, 0.68, 0]} />
 		</RigidBody>
