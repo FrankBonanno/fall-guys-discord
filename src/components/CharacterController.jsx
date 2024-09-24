@@ -5,7 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import { Controls } from '../App';
 import { Vector3 } from 'three';
 import { useGameState } from '../hooks/useGameState';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 const MOVEMENT_SPEED = 4.2;
 const JUMP_FORCE = 8;
@@ -15,6 +15,8 @@ const vel = new Vector3();
 export const CharacterController = ({ player = false, controls, state, ...props }) => {
 	const { stage } = useGameState();
 	const [, get] = useKeyboardControls();
+
+	const [animation, setAnimation] = useState('idle');
 
 	const rb = useRef();
 	const inTheAir = useRef(true);
@@ -45,7 +47,7 @@ export const CharacterController = ({ player = false, controls, state, ...props 
 			const rot = state.getState('rot');
 			if (rot) rb.current.setRotation(rot);
 
-			const anim = state.getState('anim');
+			const anim = state.getState('animation');
 			setAnimation(anim);
 			return;
 		}
@@ -96,6 +98,22 @@ export const CharacterController = ({ player = false, controls, state, ...props 
 		rb.current.setLinvel(vel);
 		state.setState('pos', rb.current.translation());
 		state.setState('rot', rb.current.rotation());
+
+		// Animations
+		const movement = Math.abs(vel.x) + Math.abs(vel.z);
+		if (inTheAir.current && vel.y > 2) {
+			setAnimation('jump_up');
+			state.setState('animation', 'jump_up');
+		} else if (inTheAir.current && vel.y < -5) {
+			setAnimation('fall');
+			state.setState('animation', 'fall');
+		} else if (movement > 1 || inTheAir.current) {
+			setAnimation('run');
+			state.setState('animation', 'run');
+		} else {
+			setAnimation('idle');
+			state.setState('animation', 'idle');
+		}
 	});
 
 	return (
@@ -118,7 +136,13 @@ export const CharacterController = ({ player = false, controls, state, ...props 
 			name={player ? 'player' : 'other'}
 		>
 			<group ref={cameraPosition} position={[0, 8, -16]}></group>
-			<Character scale={0.42} color={state.state.profile.color} name={state.state.profile.name} position-y={0.2} />
+			<Character
+				scale={0.42}
+				color={state.state.profile.color}
+				name={state.state.profile.name}
+				position-y={0.2}
+				animation={animation}
+			/>
 			<CapsuleCollider args={[0.1, 0.38]} position={[0, 0.68, 0]} />
 		</RigidBody>
 	);
