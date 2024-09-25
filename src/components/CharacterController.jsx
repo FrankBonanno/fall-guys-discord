@@ -6,6 +6,8 @@ import { Controls } from '../App';
 import { Vector3 } from 'three';
 import { useGameState } from '../hooks/useGameState';
 import { useRef, useState } from 'react';
+import { FLOOR_HEIGHT, FLOORS } from './GameArena';
+import { setState } from 'playroomkit';
 
 const MOVEMENT_SPEED = 4.2;
 const JUMP_FORCE = 8;
@@ -24,6 +26,8 @@ export const CharacterController = ({ player = false, controls, state, ...props 
 
 	const cameraPosition = useRef();
 	const cameraLookAt = useRef();
+
+	const isDead = state.getState('dead');
 
 	useFrame(({ camera }) => {
 		if (stage === 'lobby') return;
@@ -114,11 +118,21 @@ export const CharacterController = ({ player = false, controls, state, ...props 
 			setAnimation('idle');
 			state.setState('animation', 'idle');
 		}
+
+		if (rb.current.translation().y < -FLOOR_HEIGHT * FLOORS.length && !state.getState('dead')) {
+			state.setState('dead', true);
+			setState('lastDead', state.state.profile, true);
+		}
 	});
+
+	const startingPos = state.getState('startingPos');
+	if (isDead || !startingPos) return null;
 
 	return (
 		<RigidBody
 			{...props}
+			position-x={startingPos.x}
+			position-z={startingPos.z}
 			colliders={false}
 			canSleep={false}
 			enabledRotations={[false, true, false]}
